@@ -1,5 +1,8 @@
-import numpy as np
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
 
+import numpy as np
+from numba import autojit
 
 class SvddSGD(object):
     PRECISION = 10 ** -3  # important: effects the threshold, support vectors and speed!
@@ -12,7 +15,8 @@ class SvddSGD(object):
         self.nu = nu
         print 'Creating svdd with nu param :{0}.'.format(nu)
 
-    def fit(self, X, max_iter=20000, prec=1e-6, rate=0.01):
+    # @autojit
+    def fits(self, X, max_iter=20000, prec=1e-6, rate=0.01):
         if X.shape[1] < 1:
             print 'Invalid training data.'
             return -1, -1
@@ -23,12 +27,12 @@ class SvddSGD(object):
     def get_radius(self):
         return self.radius2
 
-    def predict(self, X):
+    def predicts(self, X):
         # X : (dims x samples)
         dist = self.c.T.dot(self.c) - 2.*self.c.T.dot(X) + np.sum(X*X, axis=0)
         return dist - self.radius2
 
-
+# @autojit(nopython=True)
 def optimal(X, nu, max_iter, prec, rate):
     (dims, samples) = X.shape
 
@@ -44,8 +48,10 @@ def optimal(X, nu, max_iter, prec, rate):
     for s in range(samples):
         foo = 0.0
         for d in range(dims):
-            foo += X[d, s]*X[d, s]
-            c[d] += X[d, s] / np.float64(samples)
+            tmp1 = X[d, s]*X[d, s]
+            foo += tmp1
+            tmp2 = X[d, s] / np.float64(samples)
+            c[d] += tmp2
         sum_XX[s] = foo
 
     # print np.sum(np.abs(c-np.mean(X, axis=1)))
@@ -135,4 +141,4 @@ def optimal(X, nu, max_iter, prec, rate):
 
         iter += 1
 
-        return best_c, best_radius2, obj_best, iter
+    return best_c, best_radius2, obj_best, iter
