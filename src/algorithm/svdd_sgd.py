@@ -4,6 +4,7 @@
 import numpy as np
 from numba import autojit
 
+
 class SvddSGD(object):
     PRECISION = 10 ** -3  # important: effects the threshold, support vectors and speed!
     nu = 0.95  # (scalar) the regularization constant > 0
@@ -11,9 +12,10 @@ class SvddSGD(object):
     radius2 = 0.0  # (scalar) the optimized threshold (rho)
     pobj = 0.0  # (scalar) primal objective after training
 
-    def __init__(self, nu):
+    def __init__(self, X, nu):
+        (dims, samples) = np.shape(X)
         self.nu = nu
-        self.c = np.zeros(120, dtype=np.float64)
+        self.c = np.zeros(dims, dtype=np.float64)
         print 'Creating svdd with nu param :{0}.'.format(nu)
 
     @autojit

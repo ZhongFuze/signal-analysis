@@ -14,6 +14,12 @@ from mpl_toolkits.mplot3d.axes3d import Axes3D
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as lda
 from sklearn import (manifold,datasets,decomposition,ensemble,random_projection)
 
+program_path = '/Users/fuzezhong/Documents/signal-analysis'
+data_pkl_path = '{}/{}/{}'.format(program_path, 'data', 'id_65988_key_13_days_30.pkl')
+idkey_pkl_path = '{}/{}/{}'.format(program_path, 'data', 'granularity_threshold_math_2.pkl')
+sys.path.append(program_path)
+
+from src.utils.process_data import z_score_normalization, min_max_normalization
 
 def plot_embedding_2d(X,y,title=None):
 
@@ -67,25 +73,43 @@ def plot_circle(X, cluster, center):
     plt.show()
 
 
-def plot_detect(X, cluster):
+def plot_detect(X, cluster, center):
     (dims, samples) = X.shape
     plot_x = np.linspace(0, dims, dims)
     plt.figure(figsize=(20, 6))
     normaly = []
     anomaly = []
+    k = 0
+    mean_normaly_y = np.zeros(np.shape(X[:, 0]))
+    mean_anomaly_y = np.zeros(np.shape(X[:, 0]))
     for i in range(samples):
+        k = i
         if cluster[i] == 1.0:
             normaly.append(i)
             plot_y = X[:, i]
+            mean_normaly_y += plot_y
             plt.subplot(4, 8, i+1)
+            # plt.plot(plot_x, center, color='green')
             plt.plot(plot_x, plot_y, color='blue')
+
             plt.title('diff_day: ' + str(i))
         if cluster[i] == 0.0:
             plt.subplot(4, 8, i+1)
             anomaly.append(i)
             plot_y = X[:, i]
+            mean_anomaly_y += plot_y
+            # plt.plot(plot_x, center, color='green')
             plt.plot(plot_x, plot_y, color='red')
             plt.title('diff_day: ' + str(i))
+
+    # mean_normaly_y = min_max_normalization(mean_normaly_y)
+    # mean_anomaly_y = min_max_normalization(mean_anomaly_y)
+    # plt.subplot(4, 8, k + 2)
+    # plt.plot(plot_x, mean_anomaly_y, color='red')
+    # plt.plot(plot_x, mean_normaly_y, color='blue')
+    # plt.plot(plot_x, center, color='green')
+    # plt.title('center and mean')
+    # plt.ylim(0.0, 1.0)
 
     print 'normaly days {0}'.format(normaly)
     print 'anomaly days {0}'.format(anomaly)

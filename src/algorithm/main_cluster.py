@@ -13,7 +13,7 @@ from multiprocessing import Pool
 
 program_path = '/Users/fuzezhong/Documents/signal-analysis'
 data_pkl_path = '{}/{}/{}'.format(program_path, 'data', 'id_65988_key_13_days_30.pkl')
-idkey_pkl_path = '{}/{}/{}'.format(program_path, 'data', 'granularity_threshold_math.pkl')
+idkey_pkl_path = '{}/{}/{}'.format(program_path, 'data', 'granularity_threshold_math_2.pkl')
 sys.path.append(program_path)
 
 from src.utils.process_data import z_score_normalization, min_max_normalization
@@ -51,7 +51,8 @@ def read_all_time_series(datafile, target_id):
             points_dict = data[event_id]['points']
             diff_days = points_dict.keys()
             for d in diff_days:
-                points_list.append(min_max_normalization(points_dict[d]['points'][1439-120:1439]))
+                # points_list.append(min_max_normalization(points_dict[d]['points'][1439-120:1439]))
+                points_list.append(min_max_normalization(points_dict[d]['points']))
             break
 
     data_X = np.array(points_list)
@@ -108,45 +109,48 @@ def predict(solver, X):
     #     else:
     #         cinds[j] = 0
 
-    for j in range(samples):
-        if abs(scores[j]) < 0.1:
-            cinds[j] = 0
-        else:
-            if scores[j] <= 0.0:
-                cinds[j] = 1
-            else:
-                cinds[j] = 0
-
-    # negative = 0
-    # positive = 0
-    # for i in range(samples):
-    #     if scores[i] <= 0.0:
-    #         negative += 1
-    #     else:
-    #         positive += 1
-    #
-    # s = list(scores.copy())
-    # s.sort()
-    # threshold = s[24]
-    #
-    # print 'threshold', threshold
     # for j in range(samples):
-    #     if scores[j] <= threshold:
-    #         cinds[j] = 1
-    #     else:
+    #     if abs(scores[j]) < 0.01:
     #         cinds[j] = 0
+    #     else:
+    #         if scores[j] <= 0.0:
+    #             cinds[j] = 1
+    #         else:
+    #             cinds[j] = 0
+
+    negative = []
+    positive = []
+    for i in range(samples):
+        if scores[i] <= 0.0:
+            negative.append(scores[i])
+        else:
+            positive.append(scores[i])
+
+    if len(negative) > len(positive):
+        negative.sort()
+        index = int(len(negative) * 0.8)
+        threshold = (negative[index])
+    else:
+        threshold = -0.01
+
+    print 'threshold', threshold
+    for j in range(samples):
+        if scores[j] <= threshold:
+            cinds[j] = 1
+        else:
+            cinds[j] = 0
 
     return scores, cinds
 
 
 def train(data, nu, membership):
-    svdd_solver = SvddSGD(nu)
+    svdd_solver = SvddSGD(data, nu)
     cinds = fit(svdd_solver, data, nu, init_membership=membership)
     return svdd_solver, cinds
 
 
 if __name__ == '__main__':
-    event_id = 26142234
+    event_id = 26212388
     cluster = 1
     nu = 0.1
     membership = None
@@ -160,10 +164,12 @@ if __name__ == '__main__':
     # print 'threshold', threshold
     for r in range(Dtrain.shape[1]):
         print r, res[r]
-    plot_detect(Dtrain, cluser_res)
+    plot_detect(Dtrain, cluser_res, svdd.c)
     # plot_circle(Dtrain, cluser_res, svdd.c)
 
     print 'finished'
+
+
 
 
 
