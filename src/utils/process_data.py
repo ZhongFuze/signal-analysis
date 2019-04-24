@@ -23,9 +23,9 @@ def z_score_normalization(input_x):
 
 def min_max_normalization(input_x):
     input_x = map(lambda l: float(l), input_x)
-    x = np.array(input_x)
-    x_min = np.min(x)
-    x_max = np.max(x)
+    x = np.array(list(input_x))
+    x_min = float(np.min(x))
+    x_max = float(np.max(x))
     if (x_max - x_min) == 0.0:
         return input_x
     x = (x - x_min) / (x_max - x_min)
@@ -33,9 +33,9 @@ def min_max_normalization(input_x):
     return output_x
 
 
-if __name__ == '__main__':
-    in_x = np.random.randint(5, 10, 100)
-    in_x = map(lambda x: float(x), in_x)
-    out_x = min_max_normalization(in_x)
-    print in_x
-    print out_x
+# if __name__ == '__main__':
+#     in_x = np.random.randint(5, 10, 100)
+#     in_x = map(lambda x: float(x), in_x)
+#     out_x = min_max_normalization(in_x)
+#     print in_x
+#     print out_x
