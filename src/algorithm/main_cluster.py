@@ -38,29 +38,6 @@ def read_time_series(datafile):
     return data_X
 
 
-def read_all_time_series(datafile, target_id):
-    with open(datafile, 'rb') as fr:
-        data = pickle.load(fr)
-
-    target_event_id = target_id
-    event_id_list = data.keys()
-    points_list = []
-
-    for event_id in event_id_list:
-        if event_id == target_event_id:
-            points_dict = data[event_id]['points']
-            diff_days = points_dict.keys()
-            for d in diff_days:
-                # points_list.append(min_max_normalization(points_dict[d]['points'][1439-120:1439]))
-                points_list.append(min_max_normalization(points_dict[d]['points']))
-            break
-
-    data_X = np.array(points_list)
-    X = data_X.T
-    print np.shape(X)
-    return X
-
-
 def fit(solver, X, min_chg=0.0, max_iter=40, max_svdd_iter=2000, init_membership=None):
     (dims, samples) = X.shape
     # cinds_old = np.random.randint(0, 2, samples)
@@ -149,8 +126,31 @@ def train(data, nu, membership):
     return svdd_solver, cinds
 
 
+def read_all_time_series(datafile, target_id):
+    with open(datafile, 'rb') as fr:
+        data = pickle.load(fr)
+
+    target_event_id = target_id
+    event_id_list = data.keys()
+    points_list = []
+
+    for event_id in event_id_list:
+        if event_id == target_event_id:
+            points_dict = data[event_id]['points']
+            diff_days = points_dict.keys()
+            for d in diff_days:
+                points_list.append(min_max_normalization(points_dict[d]['points'][1440-60:1440]))
+                # points_list.append(min_max_normalization(points_dict[d]['points']))
+            break
+
+    data_X = np.array(points_list)
+    X = data_X.T
+    print np.shape(X)
+    return X
+
+
 if __name__ == '__main__':
-    event_id = 26212388
+    event_id = 26228782
     cluster = 1
     nu = 0.1
     membership = None

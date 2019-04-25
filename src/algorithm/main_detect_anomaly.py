@@ -10,15 +10,19 @@ import numpy as np
 from pprint import pprint
 import matplotlib.pyplot as plt
 from multiprocessing import Pool
-import banpei
-import pandas as pd
-from pandas import Series
+import luminol
+from luminol.anomaly_detector import AnomalyDetector
+from luminol.correlator import Correlator
 
 program_path = '/Users/fuzezhong/Documents/signal-analysis'
 data_pkl_path = '{}/{}/{}'.format(program_path, 'data', 'id_65988_key_13_days_30.pkl')
 idkey_pkl_path = '{}/{}/{}'.format(program_path, 'data', 'granularity_threshold_math_2.pkl')
 sys.path.append(program_path)
-from src.utils.process_data import min_max_normalization
+
+from src.utils.process_data import z_score_normalization, min_max_normalization
+from svdd_sgd import SvddSGD
+from src.utils.plot_func import plot_detect
+
 
 def read_all_time_series(datafile, target_id):
     with open(datafile, 'rb') as fr:
@@ -43,17 +47,41 @@ def read_all_time_series(datafile, target_id):
     return X
 
 
+def transfer_ts(x):
+    in_x = list(x)
+    ts_dict = {}
+    len_ts = len(in_x)
+    for i in range(len_ts):
+        ts_dict[i] = in_x[i]
+
+    return ts_dict
+
+
 if __name__ == '__main__':
-    event_id = 26080044
+    event_id = 26258390
     Dtrain = read_all_time_series(idkey_pkl_path, event_id)
     (dims, samples) = np.shape(Dtrain)
     print(Dtrain[:, 0])
     y = Dtrain[:, 0]
-    model = banpei.SST(w=120)
-    data = Series(y)
+    ts = transfer_ts(y)
+    # print ts
 
-    result = model.detect(data, is_lanczos=True)
+    my_detector = AnomalyDetector(ts, score_threshold=3.0)
+    score = my_detector.get_all_scores()
+    score_dict = {}
+    for timestamp, value in score.iteritems():
+        score_dict[timestamp] = value
+    anomalies = my_detector.get_anomalies()
+
     plot_x = np.linspace(0, dims, dims)
-    plt.plot(plot_x, data)
-    plt.plot(plot_x, result)
+    plt.plot(plot_x, ts.values())
+    for a in anomalies:
+        print a
+        s = a.start_timestamp
+        e = a.end_timestamp
+        for index in range(s, e + 1):
+            plt.plot(index, ts[index], 'rs')
+
     plt.show()
+    # plt.plot(plot_x, score_dict.values())
+
