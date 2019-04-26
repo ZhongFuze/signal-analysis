@@ -14,11 +14,12 @@ from multiprocessing import Pool
 program_path = '/Users/fuzezhong/Documents/signal-analysis'
 data_pkl_path = '{}/{}/{}'.format(program_path, 'data', 'id_65988_key_13_days_30.pkl')
 idkey_pkl_path = '{}/{}/{}'.format(program_path, 'data', 'granularity_threshold_math_2.pkl')
+convergence_pkl_path = '{}/{}/{}'.format(program_path, 'data', 'dynamic_granularity.pkl')
 sys.path.append(program_path)
 
 from src.utils.process_data import z_score_normalization, min_max_normalization
 from svdd_sgd import SvddSGD
-from src.utils.plot_func import plot_detect
+from src.utils.plot_func import plot_detect, plot_dynamic_detect
 
 
 def read_time_series(datafile):
@@ -36,6 +37,50 @@ def read_time_series(datafile):
     data_X = data_X.T
     print np.shape(data_X)
     return data_X
+
+
+def read_all_time_series(datafile, target_id):
+    with open(datafile, 'rb') as fr:
+        data = pickle.load(fr)
+
+    target_event_id = target_id
+    event_id_list = data.keys()
+    points_list = []
+
+    for event_id in event_id_list:
+        if event_id == target_event_id:
+            points_dict = data[event_id]['points']
+            diff_days = points_dict.keys()
+            for d in diff_days:
+                points_list.append(min_max_normalization(points_dict[d]['points'][1440-60:1440]))
+                # points_list.append(min_max_normalization(points_dict[d]['points']))
+            break
+
+    data_X = np.array(points_list)
+    X = data_X.T
+    print np.shape(X)
+    return X
+
+
+def read_dynamic_time_series(datafile, target_id):
+    with open(datafile, 'rb') as fr:
+        data = pickle.load(fr)
+    event_id_list = data.keys()
+    points_list = []
+    check = []
+    for event_id in event_id_list:
+        if event_id == target_id:
+            points_dict = data[event_id]
+            now_data = points_dict[5]
+            for d in now_data:
+                check.append(d)
+                points_list.append(min_max_normalization(d))
+            break
+    print check
+    data_X = np.array(points_list)
+    X = data_X.T
+    print np.shape(X)
+    return X
 
 
 def fit(solver, X, min_chg=0.0, max_iter=40, max_svdd_iter=2000, init_membership=None):
@@ -126,37 +171,15 @@ def train(data, nu, membership):
     return svdd_solver, cinds
 
 
-def read_all_time_series(datafile, target_id):
-    with open(datafile, 'rb') as fr:
-        data = pickle.load(fr)
-
-    target_event_id = target_id
-    event_id_list = data.keys()
-    points_list = []
-
-    for event_id in event_id_list:
-        if event_id == target_event_id:
-            points_dict = data[event_id]['points']
-            diff_days = points_dict.keys()
-            for d in diff_days:
-                points_list.append(min_max_normalization(points_dict[d]['points'][1440-60:1440]))
-                # points_list.append(min_max_normalization(points_dict[d]['points']))
-            break
-
-    data_X = np.array(points_list)
-    X = data_X.T
-    print np.shape(X)
-    return X
-
-
 if __name__ == '__main__':
-    event_id = 26228782
+    event_id = 26263586
     cluster = 1
     nu = 0.1
     membership = None
     # membership = read_label(data_label_path)
     # Dtrain = read_time_series(data_pkl_path)
-    Dtrain = read_all_time_series(idkey_pkl_path, event_id)
+    # Dtrain = read_all_time_series(idkey_pkl_path, event_id)  # 未聚合
+    Dtrain = read_dynamic_time_series(convergence_pkl_path, event_id)  # 已聚合
     svdd, cinds = train(Dtrain, nu, membership)
     res, cluser_res = predict(svdd, Dtrain)
 
@@ -164,7 +187,8 @@ if __name__ == '__main__':
     # print 'threshold', threshold
     for r in range(Dtrain.shape[1]):
         print r, res[r]
-    plot_detect(Dtrain, cluser_res, svdd.c)
+
+    plot_dynamic_detect(Dtrain, cluser_res, svdd.c)
     # plot_circle(Dtrain, cluser_res, svdd.c)
 
     print 'finished'
