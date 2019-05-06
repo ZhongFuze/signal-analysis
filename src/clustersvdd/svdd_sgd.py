@@ -19,7 +19,7 @@ class SvddSGD(object):
         print 'Creating svdd with nu param :{0}.'.format(nu)
 
     @autojit
-    def fits(self, X, max_iter=20000, prec=1e-6, rate=0.05):
+    def fits(self, X, max_iter=20000, prec=1e-6, rate=0.01):
         if X.shape[1] < 1:
             print 'Invalid training data.'
             return -1, -1

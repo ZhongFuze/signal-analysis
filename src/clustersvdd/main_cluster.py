@@ -35,7 +35,7 @@ def read_time_series(datafile):
 
     data_X = np.array(points_list)
     data_X = data_X.T
-    print np.shape(data_X)
+    # print np.shape(data_X)
     return data_X
 
 
@@ -67,16 +67,13 @@ def read_dynamic_time_series(datafile, target_id):
         data = pickle.load(fr)
     event_id_list = data.keys()
     points_list = []
-    check = []
     for event_id in event_id_list:
         if event_id == target_id:
             points_dict = data[event_id]
             now_data = points_dict[5]
             for d in now_data:
-                check.append(d)
                 points_list.append(min_max_normalization(d))
             break
-    print check
     data_X = np.array(points_list)
     X = data_X.T
     print np.shape(X)
@@ -106,11 +103,15 @@ def fit(solver, X, min_chg=0.0, max_iter=40, max_svdd_iter=2000, init_membership
         scores = solver.predicts(X)
         cinds_old = cinds.copy()
 
-        for i in range(samples):
-            if scores[i] <= 0.0:
-                cinds[i] = 1
+        for j in range(samples):
+            if abs(scores[j]) < 0.01:
+                cinds[j] = 1
             else:
-                cinds[i] = 0
+                if scores[j] <= 0.0:
+                    cinds[j] = 1
+                else:
+                    cinds[j] = 0
+
         print cinds
         solver.fits(X, max_iter=max_svdd_iter)
         iter_cnt += 1
@@ -118,6 +119,21 @@ def fit(solver, X, min_chg=0.0, max_iter=40, max_svdd_iter=2000, init_membership
             .format(iter_cnt, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())))
 
     return cinds
+
+
+def predict_now(solver, X):
+    scores = solver.predicts(X)
+    cinds = 0.0
+
+    if abs(scores) < 0.01:
+        cinds = 1.0
+    else:
+        if scores <= 0.0:
+            cinds = 1.0
+        else:
+            cinds = 0.0
+
+    return scores, cinds
 
 
 def predict(solver, X):
@@ -131,37 +147,37 @@ def predict(solver, X):
     #     else:
     #         cinds[j] = 0
 
-    # for j in range(samples):
-    #     if abs(scores[j]) < 0.01:
-    #         cinds[j] = 0
-    #     else:
-    #         if scores[j] <= 0.0:
-    #             cinds[j] = 1
-    #         else:
-    #             cinds[j] = 0
-
-    negative = []
-    positive = []
-    for i in range(samples):
-        if scores[i] <= 0.0:
-            negative.append(scores[i])
-        else:
-            positive.append(scores[i])
-
-    if len(negative) > len(positive):
-        negative.sort()
-        index = int(len(negative) * 0.8)
-        threshold = (negative[index])
-    else:
-        threshold = -0.01
-
-    print 'threshold', threshold
     for j in range(samples):
-        if scores[j] <= threshold:
+        if abs(scores[j]) < 0.01:
             cinds[j] = 1
         else:
-            cinds[j] = 0
+            if scores[j] <= 0.0:
+                cinds[j] = 1
+            else:
+                cinds[j] = 0
 
+    # negative = []
+    # positive = []
+    # for i in range(samples):
+    #     if scores[i] <= 0.0:
+    #         negative.append(scores[i])
+    #     else:
+    #         positive.append(scores[i])
+    #
+    # if len(negative) > len(positive):
+    #     negative.sort()
+    #     index = int(len(negative) * 0.8)
+    #     threshold = (negative[index])
+    # else:
+    #     threshold = -0.01
+    #
+    # print 'threshold', threshold
+    # for j in range(samples):
+    #     if scores[j] < threshold:
+    #         cinds[j] = 1
+    #     else:
+    #         cinds[j] = 0
+    #
     return scores, cinds
 
 
@@ -172,29 +188,29 @@ def train(data, nu, membership):
 
 
 if __name__ == '__main__':
-    event_id = 26263586
+    event_id = 26104924
     cluster = 1
     nu = 0.1
     membership = None
     # membership = read_label(data_label_path)
     # Dtrain = read_time_series(data_pkl_path)
     # Dtrain = read_all_time_series(idkey_pkl_path, event_id)  # 未聚合
-    Dtrain = read_dynamic_time_series(convergence_pkl_path, event_id)  # 已聚合
+    D = read_dynamic_time_series(convergence_pkl_path, event_id)  # 已聚合
+    (dims, samples) = np.shape(D)
+    Dtrain = D[:, 0:samples-1]
+    Dtest = D[:, samples-1]
     svdd, cinds = train(Dtrain, nu, membership)
     res, cluser_res = predict(svdd, Dtrain)
+    test_res, test_cluser_res = predict_now(svdd, Dtest)
 
-    # threshold = 0.0
-    # print 'threshold', threshold
-    for r in range(Dtrain.shape[1]):
-        print r, res[r]
+    res_list = list(res)
+    res_list.append(test_res)
+    cluser_res_list = list(cluser_res)
+    cluser_res_list.append(test_cluser_res)
 
-    plot_dynamic_detect(Dtrain, cluser_res, svdd.c)
-    # plot_circle(Dtrain, cluser_res, svdd.c)
+    for r in range(D.shape[1]):
+        print r, res_list[r]
+
+    plot_dynamic_detect(D, cluser_res_list, res_list, svdd.c)
 
     print 'finished'
-
-
-
-
-
-

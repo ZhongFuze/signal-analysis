@@ -14,6 +14,9 @@ from mpl_toolkits.mplot3d.axes3d import Axes3D
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as lda
 from sklearn import (manifold,datasets,decomposition,ensemble,random_projection)
 from scipy import interpolate
+plt.style.use('ggplot')
+font = {'family': 'SimHei'}
+
 
 program_path = '/Users/fuzezhong/Documents/signal-analysis'
 data_pkl_path = '{}/{}/{}'.format(program_path, 'data', 'id_65988_key_13_days_30.pkl')
@@ -117,11 +120,13 @@ def plot_detect(X, cluster, center):
     plt.show()
 
 
-def plot_dynamic_detect(X, cluster, center):
+def plot_dynamic_detect(X, cluster, res, center):
     (dims, samples) = X.shape
     plot_x = np.linspace(0, dims, dims)
-    plot_x_new = np.linspace(0, dims, 2*dims)
-    plt.figure(figsize=(10, 10))
+    plot_x_new = np.linspace(0, dims, 5*dims)
+    cnter_func = interpolate.interp1d(plot_x, center, kind='cubic')
+    cubic_center = cnter_func(plot_x_new)
+    plt.figure(figsize=(8, 10))
     normaly = []
     anomaly = []
     k = 0
@@ -135,21 +140,22 @@ def plot_dynamic_detect(X, cluster, center):
             cubic_y = func(plot_x_new)
             plot_y = X[:, i]
             mean_normaly_y += plot_y
-            plt.subplot(8, 1, i+1)
-            # plt.plot(plot_x, center, color='green')
+            plt.subplot(8, 3, i+1)
+            plt.plot(plot_x_new, cubic_center, color='green')
             plt.plot(plot_x_new, cubic_y, color='blue')
-
-            plt.title('diff_day: ' + str(i))
+            plt.title('diff_day: %d    res: %.4f' % (7 - i, res[i]), fontsize=10)
+            plt.ylim(-1.0, 1.1)
         if cluster[i] == 0.0:
-            plt.subplot(8, 1, i+1)
+            plt.subplot(8, 3, i+1)
             anomaly.append(i)
             func = interpolate.interp1d(plot_x, X[:, i], kind='cubic')
             cubic_y = func(plot_x_new)
             plot_y = X[:, i]
             mean_anomaly_y += plot_y
-            # plt.plot(plot_x, center, color='green')
+            plt.plot(plot_x_new, cubic_center, color='green')
             plt.plot(plot_x_new, cubic_y, color='red')
-            plt.title('diff_day: ' + str(i))
+            plt.title('diff_day: %d    res: %.4f' % (7 - i, res[i]), fontsize=10)
+            plt.ylim(-1.0, 1.1)
 
     # mean_normaly_y = min_max_normalization(mean_normaly_y)
     # mean_anomaly_y = min_max_normalization(mean_anomaly_y)
