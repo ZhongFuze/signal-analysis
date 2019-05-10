@@ -4,6 +4,7 @@ import argparse
 import os
 from utils import mkdir
 from data_loader import get_data_loader
+from solver import Solver
 
 def str2bool(v):
     return v.lower() in ['true']
@@ -17,6 +18,11 @@ def main(config):
     dataset = get_data_loader(data_path=config.data_path, batch_size=config.batch_size, mode=config.mode)
 
     solver = Solver(dataset, vars(config))
+
+    if config.mode == 'train':
+        solver.train()
+
+    return solver
 
 
 if __name__ == '__main__':

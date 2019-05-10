@@ -13,9 +13,7 @@ def cosine_sim(x1, x2):
     x1_val = tf.sqrt(tf.reduce_sum(tf.pow(x1, 2), axis=1))
     x2_val = tf.sqrt(tf.reduce_sum(tf.pow(x2, 2), axis=1))
     denom = tf.multiply(x1_val, x2_val)
-    print denom.shape
     num = tf.reduce_sum(tf.multiply(x1, x2), axis=1)
-    print num.shape
     return tf.div(num, denom + 1e-8)
 
 
