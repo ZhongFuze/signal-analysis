@@ -24,25 +24,15 @@ class Solver(object):
         if self.pretrained_model:
             start = int(self.pretrained_model.split('_')[0])
         else:
-            start = 0
+            start = 1
 
         with tf.Session() as sess:
             init = tf.global_variables_initializer()
             sess.run(init)
             for e in range(start, self.num_epochs):
-                input_data = 10.0 * np.random.rand(1024, 118)
+                input_data = np.random.randn(1024, 118)
                 if e % 10 == 0:
                     sess.run(self.dagmm.train_op, feed_dict={self.dagmm.X: input_data})
                 else:
-                    enc = sess.run(self.dagmm.enc, feed_dict={self.dagmm.X: input_data})
-                    dec = sess.run(self.dagmm.dec, feed_dict={self.dagmm.X: input_data})
-                    print enc
-                    print dec
-                    # loss = sess.run(self.dagmm.loss, feed_dict={self.dagmm.X: input_data})
-                    # print loss
-
-
-
-
-
-
+                    loss = sess.run(self.dagmm.loss, feed_dict={self.dagmm.X: input_data})
+                    print loss

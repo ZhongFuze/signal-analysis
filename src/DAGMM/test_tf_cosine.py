@@ -57,4 +57,7 @@ with tf.Session() as sess:
     # x_max = tf.reduce_max(x, reduction_indices=[1])
     # print sess.run(x_max)  # ==> "array([220,   4], dtype=int32)"
 
+    x = tf.constant([[1, 1, 1], [4, 4, 1], [1, 2, 3]])
+    d = tf.diag_part(x)
+    print sess.run(d)
 

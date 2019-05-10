@@ -67,13 +67,13 @@ class DaGMM(object):
         self.gamma = self.estimation(self.z, self.weights, self.biases)
 
         e = tf.subtract(self.X, self.dec)
-        recon_error = tf.reduce_mean(tf.pow(e, 2))
+        self.recon_error = tf.reduce_mean(tf.pow(e, 2))
 
         self.phi, self.mu, self.cov = self.compute_gmm_params(self.z, self.gamma)
 
-        sample_energy, cov_diag = self.compute_energy(self.z, self.phi, self.mu, self.cov)
+        self.sample_energy, self.cov_diag = self.compute_energy(self.z, self.phi, self.mu, self.cov)
 
-        self.loss = recon_error + self.lambda_energy * sample_energy + self.lambda_cov_diag * cov_diag
+        self.loss = self.recon_error + self.lambda_energy * self.sample_energy + self.lambda_cov_diag * self.cov_diag
 
         self.optimizer = tf.train.AdamOptimizer(1e-4)
 
@@ -144,14 +144,14 @@ class DaGMM(object):
         eps = 1e-12
 
         for i in range(k):
-            # cov_k = tf.add(cov[i], tf.multiply(eps, tf.eye(eye_D)))
-            cov_k = cov[i]
+            cov_k = tf.add(cov[i], tf.multiply(eps, tf.eye(eye_D)))
+            # cov_k = cov[i]
             cov_inverse.append(tf.expand_dims(tf.matrix_inverse(cov_k), 0))
             # cholesky
             tmp = tf.cholesky(tf.multiply(2.0 * np.pi, cov_k))
-            det_cov.append(tf.expand_dims(tf.reduce_prod(tf.diag(tmp)), 0))
+            det_cov.append(tf.expand_dims(tf.reduce_prod(tf.diag_part(tmp)), 0))
 
-            cov_diag = cov_diag + tf.reduce_sum(tf.div(1.0, tf.diag(cov_k)))
+            cov_diag = cov_diag + tf.reduce_sum(tf.div(1.0, tf.diag_part(cov_k)))
 
         cov_inverse = tf.concat(cov_inverse, axis=0)
         det_cov = tf.concat(det_cov, axis=0)
