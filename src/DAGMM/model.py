@@ -12,7 +12,8 @@ class DaGMM(object):
         super(DaGMM, self).__init__()
         # Data loader
         self.__dict__.update(DaGMM.DEFAULTS, **config)
-        self.X = tf.placeholder("float", [self.batch_size, 118], name='input')
+        # self.X = tf.placeholder("float", [self.batch_size, 118], name='input')
+        self.X = tf.placeholder("float", [None, 118], name='input')
 
         self.dims = 118
         self.n_hidden_1 = 60
@@ -193,9 +194,7 @@ class DaGMM(object):
     #
     #     return enc, dec, z, gamma
     #
-    # # enc, dec, z, gamma = self.dagmm(input_data)
-    # # total_loss, sample_energy, recon_error, cov_diag =
-    # # self.dagmm.loss_function(input_data, dec, z, gamma, self.lambda_energy, self.lambda_cov_diag)
+
     # def loss_function(self, X, X_hat, z, gamma):
     #     e = tf.subtract(X, X_hat)
     #     recon_error = tf.reduce_mean(tf.pow(e, 2))

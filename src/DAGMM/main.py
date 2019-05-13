@@ -21,6 +21,8 @@ def main(config):
 
     if config.mode == 'train':
         solver.train()
+    elif config.mode == 'test':
+        solver.test()
 
     return solver
 
@@ -32,7 +34,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=0.001)
 
     # Training settings
-    parser.add_argument('--num_epochs', type=int, default=200)
+    parser.add_argument('--num_epochs', type=int, default=20)
     parser.add_argument('--batch_size', type=int, default=1024)
     parser.add_argument('--gmm_k', type=int, default=4)
     parser.add_argument('--latent_dim', type=int, default=3)
@@ -42,7 +44,7 @@ if __name__ == '__main__':
     parser.add_argument('--pretrained_model', type=str, default=None)
 
     # Misc
-    parser.add_argument('--mode', type=str, default='train', choices=['train', 'test'])
+    parser.add_argument('--mode', type=str, default='test', choices=['train', 'test'])
 
     # Path
     parser.add_argument('--data_path', type=str, default='kdd_cup.npz')
